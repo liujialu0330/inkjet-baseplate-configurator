@@ -68,8 +68,10 @@ description: 生成/修改喷墨打印机喷头底板的「主体(通用平台) 
 **运行方式**：用 MCP `execute` 跑一段小封装——`exec` 读取 `generator.py` 再调 `generate()`：
 ```python
 def run(_context):
-    src = open(r'...\baseplate-platform\generator.py', 'r', encoding='utf-8').read()
-    g = dict(globals()); exec(src, g); g['generate']()
+    p = r'...\baseplate-platform\generator.py'
+    src = open(p, 'r', encoding='utf-8').read()
+    g = dict(globals()); g['__file__'] = p   # 让 generator.py 用 __file__ 定位同目录 params.json
+    exec(src, g); g['generate']()
 ```
 
 **方向约定**：草图建在 **XZ 平面**，**+Y = 板厚**，**正面 (Y=plate_T) = 齐平基准**。

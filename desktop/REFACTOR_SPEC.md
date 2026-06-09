@@ -232,10 +232,9 @@ load();
 const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const SKILL_PARAMS = 'D:\\02_Agent\\27_Exploration\\fusion\\.claude\\skills\\baseplate-platform\\params.json';
 function paramsPath(){
-  try{ if(fs.existsSync(SKILL_PARAMS)) return SKILL_PARAMS; }catch(e){}
-  const up = path.join(app.getPath('userData'), 'params.json');
+  if (!app.isPackaged) return path.join(__dirname, '..', 'params.json');  // 开发: 技能根 params.json(与 generator.py 同源)
+  const up = path.join(app.getPath('userData'), 'params.json');           // 已打包: 各自 userData(首次从内置默认复制)
   try{ if(!fs.existsSync(up)) fs.copyFileSync(path.join(__dirname,'params.json'), up); }catch(e){}
   return up;
 }
