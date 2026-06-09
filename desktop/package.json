@@ -27,10 +27,7 @@
       }
     ],
     "files": [
-      "main.js",
-      "preload.js",
-      "params-store.js",
-      "ipc.js",
+      "*.js",
       "inkjet-baseplate-params.json",
       "renderer/**/*"
     ],
