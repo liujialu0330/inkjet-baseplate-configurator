@@ -6,11 +6,11 @@ description: 生成/修改喷墨打印机喷头底板的「主体(通用平台) 
 # 喷头底板 — 主体(通用平台) + 子板毛坯生成器
 
 本技能用 Fusion 360 MCP **参数化生成**喷墨打印机喷头底板的「主体 + 子板毛坯」。
-唯一真相是 `params.json`，生成器 `generator.py` 读它建模。换打印机/改布局只改参数、重跑生成器。
+唯一真相是 `inkjet-baseplate-params.json`，生成器 `generator.py` 读它建模。换打印机/改布局只改参数、重跑生成器。
 
 附带文件：
-- `params.json` —— 全部参数（值/单位/范围/标签/必填），UI 与生成器共用的数据源（唯一真相）。
-- `generator.py` —— 读 `params.json`，用 Fusion API 建「主体 + 子板毛坯」。
+- `inkjet-baseplate-params.json` —— 全部参数（值/单位/范围/标签/必填），UI 与生成器共用的数据源（唯一真相）。
+- `generator.py` —— 读 `inkjet-baseplate-params.json`，用 Fusion API 建「主体 + 子板毛坯」。
 - `config-ui.html` + `serve.py` —— 本地配置界面：参数表单 + three.js **真 3D 预览**（不依赖 Fusion）+ 重叠/必填/固定孔校验 + **导出主体 3MF**（前端直接出，不经 Fusion）。`python serve.py` 后浏览器开 `http://127.0.0.1:8080/`。
 
 **产出**：一个 **混合设计**（`designIntent = HybridDesignIntentType`，零件+装配同文件）、**参数化**、含 **2 个独立组件** `主体` 与 `子板`（子板为毛坯，喷头区留待 Skill 2 手动）。
@@ -21,7 +21,7 @@ description: 生成/修改喷墨打印机喷头底板的「主体(通用平台) 
 
 - **该用**：从零生成底板平台；调整主体尺寸 / 角孔 / 子板区域的数量·尺寸·间距·旋转 / 整板厚度；生成与主体窗口通用的「子板毛坯」。
 - **不该用**：喷头专属的内部（中间挖空 + 喷头安装孔）——交给 Skill 2 `baseplate-head`，它在本毛坯上继续加工。
-- **前提**：Fusion 360 打开、MCP 已连通、有活动文档；所有参数改在 `params.json`，改完重新运行生成器。
+- **前提**：Fusion 360 打开、MCP 已连通、有活动文档；所有参数改在 `inkjet-baseplate-params.json`，改完重新运行生成器。
 
 ---
 
@@ -38,7 +38,7 @@ description: 生成/修改喷墨打印机喷头底板的「主体(通用平台) 
 
 ## 3. 参数表
 
-唯一真相在 `params.json`，下表是速查；改值后重跑生成器。
+唯一真相在 `inkjet-baseplate-params.json`，下表是速查；改值后重跑生成器。
 
 | 组 | 参数 | 含义 | 活/重生成 |
 |---|---|---|---|
@@ -58,8 +58,8 @@ description: 生成/修改喷墨打印机喷头底板的「主体(通用平台) 
 
 \* 间距是活参数，但窗口位置数值摆放，改间距后建议重生成以保持居中。
 
-**活参数**：直接在 Fusion 参数表里改即可实时更新几何。微调后可把用户参数读回写入 `params.json` 保持同步。
-**重生成参数**：改 `params.json` 后重跑生成器。
+**活参数**：直接在 Fusion 参数表里改即可实时更新几何。微调后可把用户参数读回写入 `inkjet-baseplate-params.json` 保持同步。
+**重生成参数**：改 `inkjet-baseplate-params.json` 后重跑生成器。
 
 ---
 
@@ -70,7 +70,7 @@ description: 生成/修改喷墨打印机喷头底板的「主体(通用平台) 
 def run(_context):
     p = r'...\baseplate-platform\generator.py'
     src = open(p, 'r', encoding='utf-8').read()
-    g = dict(globals()); g['__file__'] = p   # 让 generator.py 用 __file__ 定位同目录 params.json
+    g = dict(globals()); g['__file__'] = p   # 让 generator.py 用 __file__ 定位同目录 inkjet-baseplate-params.json
     exec(src, g); g['generate']()
 ```
 

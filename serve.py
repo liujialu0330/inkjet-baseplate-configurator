@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # 喷头底板配置 UI 的本地小服务
 #   GET  /                -> config-ui.html
-#   GET  /params          -> 返回 params.json
-#   POST /params          -> 写回 params.json (校验 JSON)
+#   GET  /params          -> 返回 inkjet-baseplate-params.json
+#   POST /params          -> 写回 inkjet-baseplate-params.json (校验 JSON)
 # 运行: python serve.py   然后浏览器打开 http://127.0.0.1:8765/
 import http.server, socketserver, json, os
 
 DIR = os.path.dirname(os.path.abspath(__file__))
-PARAMS = os.path.join(DIR, "params.json")
+PARAMS = os.path.join(DIR, "inkjet-baseplate-params.json")
 PORT = 8080
 
 class H(http.server.SimpleHTTPRequestHandler):

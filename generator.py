@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # 喷头底板生成器 (Skill 1: 主体 + 子板毛坯)
-# 读 params.json -> 在 Fusion 新建混合设计文档, 建两个组件: 主体 / 子板
+# 读 inkjet-baseplate-params.json -> 在 Fusion 新建混合设计文档, 建两个组件: 主体 / 子板
 # 由 MCP execute 以 exec() 方式加载并调用 generate()
 import adsk.core, adsk.fusion, json, os, math
 
-# params.json 与本脚本同目录(技能根); 经 MCP exec 运行时, 外层封装需把 __file__ 指到本脚本(见 SKILL.md §4)
-PARAMS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "params.json")
+# inkjet-baseplate-params.json 与本脚本同目录(技能根); 经 MCP exec 运行时, 外层封装需把 __file__ 指到本脚本(见 SKILL.md §4)
+PARAMS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inkjet-baseplate-params.json")
 
 def generate():
     app = adsk.core.Application.get()

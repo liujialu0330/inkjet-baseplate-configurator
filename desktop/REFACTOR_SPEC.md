@@ -7,7 +7,7 @@
 - 巨石：`renderer/index.html` 把 CSS + HTML + 6 类职责塞进一个 `<script>`，全局可变状态串联。
 - 上帝函数：`render()` 同时做 建几何 / 校验 / 改 DOM / 切按钮 / 写消息。
 - 纯逻辑（几何数学、校验）与 THREE/DOM 耦合，无法单测。
-- 主进程 IPC 无错误处理：`params.json` 损坏会让渲染端白屏。
+- 主进程 IPC 无错误处理：`inkjet-baseplate-params.json` 损坏会让渲染端白屏。
 
 ## 1. 原则
 - **高内聚低耦合**：一个文件一类职责。
@@ -23,7 +23,7 @@ desktop/
   params-store.js    (新: 路径解析 + 读写 + 错误处理)
   ipc.js             (新: 注册 ipcMain 处理器, 用 params-store)
   package.json       (改: build.files 增列新文件)
-  params.json        (不变)
+  inkjet-baseplate-params.json        (不变)
   renderer/
     index.html       (重写: 仅 markup, link css, script app.js, 保留 importmap + jszip)
     css/styles.css   (新: 抽离原 <style>)
@@ -201,7 +201,7 @@ function render(){
 }
 async function load(){
   const d = await loadParams();
-  if(!d){ setMsg('载入 params.json 失败', C.red); return; }
+  if(!d){ setMsg('载入 inkjet-baseplate-params.json 失败', C.red); return; }
   store.setData(d); form.buildForm(); viewer.resetFitFlag(); render();
 }
 document.getElementById('preview').onclick = render;
@@ -233,9 +233,9 @@ const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 function paramsPath(){
-  if (!app.isPackaged) return path.join(__dirname, '..', 'params.json');  // 开发: 技能根 params.json(与 generator.py 同源)
-  const up = path.join(app.getPath('userData'), 'params.json');           // 已打包: 各自 userData(首次从内置默认复制)
-  try{ if(!fs.existsSync(up)) fs.copyFileSync(path.join(__dirname,'params.json'), up); }catch(e){}
+  if (!app.isPackaged) return path.join(__dirname, '..', 'inkjet-baseplate-params.json');  // 开发: 技能根 inkjet-baseplate-params.json(与 generator.py 同源)
+  const up = path.join(app.getPath('userData'), 'inkjet-baseplate-params.json');           // 已打包: 各自 userData(首次从内置默认复制)
+  try{ if(!fs.existsSync(up)) fs.copyFileSync(path.join(__dirname,'inkjet-baseplate-params.json'), up); }catch(e){}
   return up;
 }
 function load(){ return JSON.parse(fs.readFileSync(paramsPath(),'utf-8')); }
@@ -273,7 +273,7 @@ app.on('window-all-closed', ()=>app.quit());
 ### preload.js — 不变。
 ### package.json — `build.files` 改为：
 ```json
-"files": ["main.js","preload.js","params-store.js","ipc.js","params.json","renderer/**/*"]
+"files": ["main.js","preload.js","params-store.js","ipc.js","inkjet-baseplate-params.json","renderer/**/*"]
 ```
 其余字段不变。
 

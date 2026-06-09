@@ -23,7 +23,7 @@ function render(){
 }
 async function load(){
   const d = await loadParams();
-  if(!d){ setMsg('载入 params.json 失败', C.red); return; }
+  if(!d){ setMsg('载入参数失败', C.red); return; }
   store.setData(d); form.buildForm(); viewer.resetFitFlag(); render();
 }
 document.getElementById('preview').onclick = render;

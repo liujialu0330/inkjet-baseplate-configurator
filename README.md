@@ -3,15 +3,15 @@
 喷墨打印机**喷头底板**的参数化建模技能 + 自包含 **Electron 配置器**。
 以 Ricoh GEN5/G5 喷头为例，参数化生成「**主体（通用平台）+ 子板毛坯**」，子板的喷头安装区留待后续按喷头型号加工。
 
-唯一真相是 `params.json`，改参数、重跑生成器即可换打印机/改布局。
+唯一真相是 `inkjet-baseplate-params.json`，改参数、重跑生成器即可换打印机/改布局。
 
 ## 目录结构
 
 ```
 .
 ├── SKILL.md            技能说明(给 AI/协作者: 适用场景·装配规则·参数表·建模配方·坑)
-├── params.json         全部参数(值/单位/范围/标签/必填) —— UI 与生成器共用的唯一数据源
-├── generator.py        读 params.json, 用 Fusion 360 API 建"主体+子板毛坯"(混合设计/2 组件)
+├── inkjet-baseplate-params.json         全部参数(值/单位/范围/标签/必填) —— UI 与生成器共用的唯一数据源
+├── generator.py        读 inkjet-baseplate-params.json, 用 Fusion 360 API 建"主体+子板毛坯"(混合设计/2 组件)
 ├── config-ui.html      浏览器版配置界面(serve.py 起本地服务)
 ├── serve.py            本地静态服务(python serve.py → http://127.0.0.1:8080/)
 └── desktop/            自包含 Electron 桌面配置器(免浏览器/免联网)
@@ -23,7 +23,7 @@
 
 ## 桌面配置器(desktop)
 
-参数配置 + **真 3D 预览**(three.js, 不依赖 Fusion) + 重叠/必填/孔位校验 + 保存 `params.json` + 导出主体 3MF；带**版本号**与**自动更新**。
+参数配置 + **真 3D 预览**(three.js, 不依赖 Fusion) + 重叠/必填/孔位校验 + 保存 `inkjet-baseplate-params.json` + 导出主体 3MF；带**版本号**与**自动更新**。
 
 ### 开发运行
 ```powershell
