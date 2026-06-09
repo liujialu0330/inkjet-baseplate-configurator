@@ -1,0 +1,56 @@
+{
+  "name": "baseplate-config",
+  "version": "1.0.0",
+  "description": "喷头底板 主体+子板毛坯 配置器 (Electron 自包含)",
+  "main": "main.js",
+  "author": "fusion-baseplate",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.1",
+    "electron": "^31.7.6",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.fusion.baseplate.config",
+    "productName": "喷头底板配置器",
+    "directories": {
+      "output": "dist"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "liujialu0330",
+        "repo": "inkjet-baseplate-configurator"
+      }
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "params-store.js",
+      "ipc.js",
+      "params.json",
+      "renderer/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "喷头底板配置器",
+      "uninstallDisplayName": "喷头底板配置器",
+      "artifactName": "inkjet-baseplate-configurator-Setup-${version}.exe"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
+}

@@ -1,0 +1,44 @@
+  :root{
+    --bg:#f5f6f8; --panel:#ffffff; --line:#e7e9ee;
+    --txt:#1f2329; --txt2:#5b6573; --muted:#9aa1ac;
+    --accent:#3b6ef5; --accent-d:#2f5bd6; --green:#1aa06d; --red:#e5484d;
+    --field:#fcfcfd; --field-bd:#d8dce3;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:var(--txt);background:var(--bg);font-size:13px;}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:0 18px;height:50px;display:flex;align-items:center;gap:12px;}
+  header .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
+  header h1{font-size:14.5px;margin:0;font-weight:650;letter-spacing:.2px;}
+  header .sub{font-size:11.5px;color:var(--muted);}
+  header .ver{font-size:11px;color:var(--txt2);background:#eef0f4;border:1px solid var(--line);border-radius:10px;padding:1px 8px;font-weight:600;letter-spacing:.3px;}
+  #wrap{display:flex;height:calc(100vh - 50px);}
+  #form{width:392px;overflow-y:auto;padding:8px 16px 18px;background:var(--panel);border-right:1px solid var(--line);}
+  #view{flex:1;display:flex;flex-direction:column;}
+  #c3d{flex:1;position:relative;overflow:hidden;background:radial-gradient(120% 120% at 50% 25%, #ffffff 0%, #eaedf2 60%, #dde1e9 100%);}
+  #c3d canvas{display:block;}
+  #hint3d{position:absolute;left:12px;bottom:10px;color:#8b93a1;font-size:11px;pointer-events:none;}
+  .grp{margin-top:14px;}
+  .grp h3{font-size:11.5px;letter-spacing:.5px;margin:0 0 6px;color:var(--txt2);font-weight:650;display:flex;align-items:center;gap:7px;}
+  .grp h3::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--accent);}
+  .row{display:flex;align-items:center;margin:5px 0;gap:10px;}
+  .row label{flex:1;font-size:12.5px;color:var(--txt);line-height:1.3;}
+  .row .nm{color:var(--muted);font-size:10px;}
+  .req-star{color:var(--red);font-weight:700;margin-left:1px;}
+  .row input[type=number]{width:84px;padding:5px 7px;border:1px solid var(--field-bd);border-radius:7px;font-size:12.5px;text-align:right;background:var(--field);color:var(--txt);transition:border-color .12s,box-shadow .12s;}
+  .row input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,110,245,.13);}
+  .row input.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(229,72,77,.12);}
+  .derived{margin-top:16px;font-size:11.5px;color:var(--txt2);background:#f7f8fa;border:1px solid var(--line);border-radius:9px;padding:9px 11px;line-height:1.6;}
+  #bar{padding:11px 16px;background:var(--panel);border-top:1px solid var(--line);display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+  button{padding:8px 17px;border:1px solid transparent;border-radius:8px;font-size:13px;font-weight:550;cursor:pointer;transition:background .12s,opacity .12s;}
+  #preview{background:var(--accent);color:#fff;} #preview:hover{background:var(--accent-d);}
+  #save{background:var(--green);color:#fff;} #save:disabled{background:#e7e9ee;color:#aeb4bd;border-color:var(--line);cursor:not-allowed;}
+  #export{background:#fff;color:var(--accent);border-color:var(--accent);} #export:disabled{color:#aeb4bd;border-color:var(--line);cursor:not-allowed;}
+  #resetview,#reload,#checkupd{background:#fff;color:var(--txt2);border-color:var(--field-bd);} #resetview:hover,#reload:hover,#checkupd:hover{background:#f3f4f6;}
+  #msg{font-size:12.5px;margin-left:2px;}
+  .adv-sw{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--txt2);cursor:pointer;user-select:none;}
+  .switch{position:relative;display:inline-block;width:38px;height:20px;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:#cbd2da;border-radius:20px;transition:.18s;}
+  .slider::before{content:"";position:absolute;height:14px;width:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .switch input:checked + .slider{background:var(--accent);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}

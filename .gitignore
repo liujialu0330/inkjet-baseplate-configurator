@@ -1,0 +1,31 @@
+# 本地工具配置文件, 不上传
+CLAUDE.md
+
+# 依赖与构建产物
+node_modules/
+dist/
+out/
+build/Release/
+
+# 本地备份 / 临时 / 日志
+desktop/_backup_pre_refactor/
+desktop/_*.log
+desktop/_smoke.*
+*.log
+
+# 7za 包装器编译中间物(源文件 _7za_wrap.cs 保留, 编译出的 exe 不入库)
+desktop/node_modules/7zip-bin/win/x64/7za_real.exe
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 操作系统 / 编辑器
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Fusion 临时
+*.f3d.lock

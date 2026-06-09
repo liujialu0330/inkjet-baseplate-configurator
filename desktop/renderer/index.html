@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<title>喷头底板 · 参数配置</title>
+<link rel="stylesheet" href="./css/styles.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.js",
+  "three/addons/": "./vendor/addons/"
+}}
+</script>
+<script src="./vendor/jszip.min.js"></script>
+</head>
+<body>
+<header>
+  <span class="dot"></span>
+  <h1>喷头底板 · 参数配置</h1>
+  <span class="ver" id="ver"></span>
+  <span class="sub">点「预览」更新 3D · 拖拽旋转 / 滚轮缩放 · <span style="color:var(--red)">*</span> 为必填</span>
+  <label class="adv-sw"><span>高级</span><span class="switch"><input type="checkbox" id="adv"><span class="slider"></span></span></label>
+</header>
+<div id="wrap">
+  <div id="form"></div>
+  <div id="view">
+    <div id="c3d"><div id="hint3d">左键转 · 右键平移 · 滚轮缩放</div></div>
+    <div id="bar">
+      <button id="preview">预览</button>
+      <button id="save">保存到 params.json</button>
+      <button id="export">导出主体 3MF</button>
+      <button id="resetview">复位视角</button>
+      <button id="reload">重新载入</button>
+      <button id="checkupd">检查更新</button>
+      <span id="msg"></span>
+    </div>
+  </div>
+</div>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<title>喷头底板 · 参数配置</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --panel:#ffffff; --line:#e7e9ee;
+    --txt:#1f2329; --txt2:#5b6573; --muted:#9aa1ac;
+    --accent:#3b6ef5; --accent-d:#2f5bd6; --green:#1aa06d; --red:#e5484d;
+    --field:#fcfcfd; --field-bd:#d8dce3;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:var(--txt);background:var(--bg);font-size:13px;}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:0 18px;height:50px;display:flex;align-items:center;gap:12px;}
+  header .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
+  header h1{font-size:14.5px;margin:0;font-weight:650;letter-spacing:.2px;}
+  header .sub{font-size:11.5px;color:var(--muted);}
+  #wrap{display:flex;height:calc(100vh - 50px);}
+  #form{width:392px;overflow-y:auto;padding:8px 16px 18px;background:var(--panel);border-right:1px solid var(--line);}
+  #view{flex:1;display:flex;flex-direction:column;}
+  #c3d{flex:1;position:relative;overflow:hidden;background:radial-gradient(120% 120% at 50% 25%, #ffffff 0%, #eaedf2 60%, #dde1e9 100%);}
+  #c3d canvas{display:block;}
+  #hint3d{position:absolute;left:12px;bottom:10px;color:#8b93a1;font-size:11px;pointer-events:none;}
+  .grp{margin-top:14px;}
+  .grp h3{font-size:11.5px;letter-spacing:.5px;margin:0 0 6px;color:var(--txt2);font-weight:650;display:flex;align-items:center;gap:7px;}
+  .grp h3::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--accent);}
+  .row{display:flex;align-items:center;margin:5px 0;gap:10px;}
+  .row label{flex:1;font-size:12.5px;color:var(--txt);line-height:1.3;}
+  .row .nm{color:var(--muted);font-size:10px;}
+  .req-star{color:var(--red);font-weight:700;margin-left:1px;}
+  .row input[type=number]{width:84px;padding:5px 7px;border:1px solid var(--field-bd);border-radius:7px;font-size:12.5px;text-align:right;background:var(--field);color:var(--txt);transition:border-color .12s,box-shadow .12s;}
+  .row input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,110,245,.13);}
+  .row input.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(229,72,77,.12);}
+  .derived{margin-top:16px;font-size:11.5px;color:var(--txt2);background:#f7f8fa;border:1px solid var(--line);border-radius:9px;padding:9px 11px;line-height:1.6;}
+  #bar{padding:11px 16px;background:var(--panel);border-top:1px solid var(--line);display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+  button{padding:8px 17px;border:1px solid transparent;border-radius:8px;font-size:13px;font-weight:550;cursor:pointer;transition:background .12s,opacity .12s;}
+  #preview{background:var(--accent);color:#fff;} #preview:hover{background:var(--accent-d);}
+  #save{background:var(--green);color:#fff;} #save:disabled{background:#e7e9ee;color:#aeb4bd;border-color:var(--line);cursor:not-allowed;}
+  #export{background:#fff;color:var(--accent);border-color:var(--accent);} #export:disabled{color:#aeb4bd;border-color:var(--line);cursor:not-allowed;}
+  #resetview,#reload{background:#fff;color:var(--txt2);border-color:var(--field-bd);} #resetview:hover,#reload:hover{background:#f3f4f6;}
+  #msg{font-size:12.5px;margin-left:2px;}
+  .adv-sw{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--txt2);cursor:pointer;user-select:none;}
+  .switch{position:relative;display:inline-block;width:38px;height:20px;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:#cbd2da;border-radius:20px;transition:.18s;}
+  .slider::before{content:"";position:absolute;height:14px;width:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .switch input:checked + .slider{background:var(--accent);}
+  .switch input:checked + .slider::before{transform:translateX(18px);}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+<header>
+  <span class="dot"></span>
+  <h1>喷头底板 · 参数配置</h1>
+  <span class="sub">点「预览」更新 3D · 拖拽旋转 / 滚轮缩放 · <span style="color:var(--red)">*</span> 为必填</span>
+  <label class="adv-sw"><span>高级</span><span class="switch"><input type="checkbox" id="adv"><span class="slider"></span></span></label>
+</header>
+<div id="wrap">
+  <div id="form"></div>
+  <div id="view">
+    <div id="c3d"><div id="hint3d">左键转 · 右键平移 · 滚轮缩放</div></div>
+    <div id="bar">
+      <button id="preview">预览</button>
+      <button id="save">保存到 params.json</button>
+      <button id="export">导出主体 3MF</button>
+      <button id="resetview">复位视角</button>
+      <button id="reload">重新载入</button>
+      <span id="msg"></span>
+    </div>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const GROUPS=[["shared","基本"],["main_body","主体"],["sub_blank","子板毛坯"]];
+let DATA=null, REQUIRED=[], scene,camera,renderer,controls,modelGroup,fitted=false;
+let MAT_BACK,MAT_FRONT,MAT_SUBF,EDGE;
+let cubeScene,cubeCam,viewCube,raycaster,cubeDrag=null,pendingFace=null;
+let advanced=false;  // 高级开关: false=只显示必填(红标), true=显示全部
+
+function allVals(){ const v={}; for(const [g] of GROUPS) for(const k in DATA[g]) v[k]=DATA[g][k].value;
+  v.sub_W=v.win_W-v.fit_gap_w; v.sub_H=v.win_H-v.fit_gap_h; return v; }
+
+function buildForm(){
+  REQUIRED=[]; const root=document.getElementById('form'); root.innerHTML='';
+  for(const [g,title] of GROUPS){
+    const box=document.createElement('div'); box.className='grp'; box.innerHTML=`<h3>${title}</h3>`;
+    let n=0;
+    for(const k in DATA[g]){
+      const p=DATA[g][k], isInt=(p.step===1&&p.unit==="");
+      if(p.required) REQUIRED.push(k);
+      if(!advanced && !p.required) continue;   // 非高级: 只显示必填(红标)
+      const row=document.createElement('div'); row.className='row';
+      row.innerHTML=`<label>${p.label||k}${p.required?' <span class="req-star">*</span>':''}${p.unit?` <span class="nm">${p.unit}</span>`:''}</label>`;
+      const inp=document.createElement('input');
+      inp.type='number'; inp.min=p.min; inp.max=p.max; inp.step=p.step; inp.value=p.value;
+      inp.dataset.key=k; inp.dataset.req=p.required?'1':'0';
+      inp.oninput=()=>{ let x=parseFloat(inp.value); if(isInt)x=Math.round(x); if(!isNaN(x)) DATA[g][k].value=x; markStale(); };
+      row.appendChild(inp); box.appendChild(row); n++;
+    }
+    if(n>0) root.appendChild(box);
+  }
+  const d=document.createElement('div'); d.className='derived'; d.id='derived'; root.appendChild(d); updateDerived();
+}
+function updateDerived(){ const d=document.getElementById('derived'); if(!d)return; const v=allVals();
+  d.innerHTML=`派生 · 子板外形 <b>${v.sub_W.toFixed(1)} × ${v.sub_H.toFixed(1)}</b> mm`
+    +`<br>齐平 · 子板正面 = 主体正面 = 喷嘴面 · 板厚 ${v.plate_T} mm`
+    +`<br>固定孔 · 主体台肩孔 与 子板耳孔 同位同径(必须重合)`; }
+function markStale(){ updateDerived(); const m=document.getElementById('msg'); m.textContent='已修改，点「预览」更新'; m.style.color='var(--muted)'; }
+
+/* ---------- 几何工具 ---------- */
+function rectPts(cx,cy,w,h,deg){const a=deg*Math.PI/180,hw=w/2,hh=h/2;
+  return [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]].map(([x,y])=>[cx+x*Math.cos(a)-y*Math.sin(a),cy+x*Math.sin(a)+y*Math.cos(a)]);}
+function rot(cx,cy,x,y,deg){const a=deg*Math.PI/180;return [cx+(x-cx)*Math.cos(a)-(y-cy)*Math.sin(a),cy+(x-cx)*Math.sin(a)+(y-cy)*Math.cos(a)];}
+function outerRect(s,W,H){s.moveTo(-W/2,-H/2);s.lineTo(W/2,-H/2);s.lineTo(W/2,H/2);s.lineTo(-W/2,H/2);s.lineTo(-W/2,-H/2);}
+function circHole(x,y,r){const p=new THREE.Path();p.absarc(x,y,r,0,Math.PI*2,true);return p;}
+function polyHole(pts){const p=new THREE.Path();p.setFromPoints(pts.map(q=>new THREE.Vector2(q[0],q[1])));p.closePath();return p;}
+function winCenters(v){const n=Math.round(v.win_count),a=[];for(let i=0;i<n;i++)a.push((i-(n-1)/2)*v.win_pitch);return a;}
+function cornerXY(v){const out=[];for(const x of [-(v.plate_W/2-v.corner_inset_x),v.plate_W/2-v.corner_inset_x])
+  for(const y of [-(v.plate_H/2-v.corner_inset_z),v.plate_H/2-v.corner_inset_z]) out.push([x,y]); return out;}
+// 主体背层截面(台肩+M3孔, 窗口中段挖空)
+function shapeBack(v){
+  const A=new THREE.Shape(); outerRect(A,v.plate_W,v.plate_H);
+  cornerXY(v).forEach(([x,y])=>A.holes.push(circHole(x,y,v.corner_dia/2)));
+  winCenters(v).forEach(cx=>{ A.holes.push(polyHole(rectPts(cx,0,v.win_W,v.win_H-2*v.shelf_H,v.region_angle)));
+    [1,-1].forEach(s=>{const [hx,hy]=rot(cx,0,cx,s*(v.win_H/2-v.m3_inset),v.region_angle);A.holes.push(circHole(hx,hy,v.m3_dia/2));}); });
+  return A;
+}
+// 主体前层截面(全窗口贯穿)
+function shapeFront(v){
+  const B=new THREE.Shape(); outerRect(B,v.plate_W,v.plate_H);
+  cornerXY(v).forEach(([x,y])=>B.holes.push(circHole(x,y,v.corner_dia/2)));
+  winCenters(v).forEach(cx=>B.holes.push(polyHole(rectPts(cx,0,v.win_W,v.win_H,v.region_angle))));
+  return B;
+}
+function part(shape,depth,mat,z,segs){
+  const g=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:segs||12});
+  const m=new THREE.Mesh(g,mat); if(z)m.position.z=z;
+  m.castShadow=true; m.receiveShadow=true;
+  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g,32),EDGE)); return m;
+}
+function satOverlap(A,B){for(const poly of [A,B])for(let i=0;i<poly.length;i++){
+  const j=(i+1)%poly.length,nx=-(poly[j][1]-poly[i][1]),ny=(poly[j][0]-poly[i][0]);
+  let mnA=1e9,mxA=-1e9,mnB=1e9,mxB=-1e9;
+  for(const p of A){const d=p[0]*nx+p[1]*ny;mnA=Math.min(mnA,d);mxA=Math.max(mxA,d);}
+  for(const p of B){const d=p[0]*nx+p[1]*ny;mnB=Math.min(mnB,d);mxB=Math.max(mxB,d);}
+  if(mxA<mnB||mxB<mnA)return false;} return true;}
+// 主体几何问题: 窗口互相重叠 或 越出板边界 或 必填缺失
+function mainBodyProblems(v){
+  const out=[]; const n=Math.round(v.win_count);
+  const wr=winCenters(v).map(cx=>rectPts(cx,0,v.win_W,v.win_H,v.region_angle)); const bad=new Set();
+  for(let i=0;i+1<n;i++) if(satOverlap(wr[i],wr[i+1])){bad.add(i);bad.add(i+1);}
+  for(let i=0;i<n;i++) for(const [x,y] of wr[i]) if(x<-v.plate_W/2||x>v.plate_W/2||y<-v.plate_H/2||y>v.plate_H/2) bad.add(i);
+  return {bad, wr};
+}
+
+/* ---------- 3D ---------- */
+function init3D(){
+  const host=document.getElementById('c3d');
+  scene=new THREE.Scene(); scene.background=null;
+  camera=new THREE.PerspectiveCamera(45,host.clientWidth/host.clientHeight,1,100000); camera.position.set(260,240,320);
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true}); renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(host.clientWidth,host.clientHeight);
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  host.appendChild(renderer.domElement);
+  controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true;
+  // 光照
+  scene.add(new THREE.HemisphereLight(0xffffff,0xccd3db,1.1));
+  const key=new THREE.DirectionalLight(0xffffff,0.62); key.position.set(160,430,230); key.castShadow=true;
+  key.shadow.mapSize.set(2048,2048);
+  const sc=key.shadow.camera; sc.near=1; sc.far=3000; sc.left=-700; sc.right=700; sc.top=700; sc.bottom=-700; sc.bias=-0.0005;
+  scene.add(key);
+  const fill=new THREE.DirectionalLight(0xffffff,0.42); fill.position.set(-240,150,-170); scene.add(fill);
+  const fill2=new THREE.DirectionalLight(0xffffff,0.3); fill2.position.set(120,80,-260); scene.add(fill2);
+  // 地面落地阴影 + 基准网格 + 原点坐标系(datum)
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(6000,6000), new THREE.ShadowMaterial({opacity:0.11}));
+  ground.rotation.x=-Math.PI/2; ground.position.y=-0.2; ground.receiveShadow=true; scene.add(ground);
+  const grid=new THREE.GridHelper(1200,60,0xa9b2bd,0xdce0e6); grid.position.y=-0.2; scene.add(grid);
+  const axes=new THREE.AxesHelper(55); axes.material.depthTest=false; axes.renderOrder=999; scene.add(axes);
+  MAT_BACK=new THREE.MeshStandardMaterial({color:0xc0c6ce,metalness:0.0,roughness:0.72,side:THREE.DoubleSide});
+  MAT_FRONT=new THREE.MeshStandardMaterial({color:0xd0d5db,metalness:0.0,roughness:0.7,side:THREE.DoubleSide});
+  MAT_SUBF=new THREE.MeshStandardMaterial({color:0xd6dbe1,metalness:0.0,roughness:0.7,side:THREE.DoubleSide});
+  EDGE=new THREE.LineBasicMaterial({color:0x586474,transparent:true,opacity:0.5});
+  modelGroup=new THREE.Group(); scene.add(modelGroup);  // 竖立(底板高度沿 Y 向上, 立在网格上)
+  buildViewCube();
+  renderer.domElement.addEventListener('pointerdown', onCubeDown, true);
+  addEventListener('resize',onResize);
+  (function loop(){
+    requestAnimationFrame(loop); if(!cubeDrag) controls.update();
+    const host=document.getElementById('c3d'), W=host.clientWidth, H=host.clientHeight;
+    renderer.setViewport(0,0,W,H); renderer.setScissorTest(false); renderer.render(scene,camera);
+    const S=104, M=12, vx=W-S-M, vy=H-S-M;            // 右上角视角立方体
+    const d=camera.position.clone().sub(controls.target).normalize();
+    cubeCam.position.copy(d).multiplyScalar(5); cubeCam.up.copy(camera.up); cubeCam.lookAt(0,0,0);
+    renderer.setViewport(vx,vy,S,S); renderer.setScissor(vx,vy,S,S); renderer.setScissorTest(true);
+    renderer.render(cubeScene,cubeCam); renderer.setScissorTest(false);
+  })();
+}
+
+/* ---------- 视角立方体 (ViewCube) ---------- */
+function faceTex(txt){
+  const c=document.createElement('canvas'); c.width=c.height=128; const g=c.getContext('2d');
+  g.fillStyle='#eef1f6'; g.fillRect(0,0,128,128);
+  g.strokeStyle='#b9c0ca'; g.lineWidth=6; g.strokeRect(3,3,122,122);
+  g.fillStyle='#39404c'; g.font='600 36px "Microsoft YaHei",system-ui,sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText(txt,64,70);
+  const t=new THREE.CanvasTexture(c); t.anisotropy=4; return t;
+}
+function buildViewCube(){
+  cubeScene=new THREE.Scene();
+  cubeCam=new THREE.OrthographicCamera(-1.35,1.35,1.35,-1.35,0.1,20);
+  const mats=['右','左','上','下','前','后'].map(t=>new THREE.MeshBasicMaterial({map:faceTex(t)}));  // +X -X +Y -Y +Z -Z
+  viewCube=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5), mats);
+  cubeScene.add(viewCube);
+  cubeScene.add(new THREE.LineSegments(new THREE.EdgesGeometry(viewCube.geometry), new THREE.LineBasicMaterial({color:0x9aa3ad})));
+  raycaster=new THREE.Raycaster();
+}
+function applyView(n){
+  if(!controls) return;
+  const dist=camera.position.distanceTo(controls.target), d=n.clone().normalize();
+  camera.up.copy(Math.abs(d.y)>0.9 ? new THREE.Vector3(0,0,d.y>0?-1:1) : new THREE.Vector3(0,1,0));
+  camera.position.copy(controls.target).addScaledVector(d,dist);
+  camera.lookAt(controls.target); controls.update();
+}
+function inCubeRegion(e){
+  const host=document.getElementById('c3d'), W=host.clientWidth;
+  const r=renderer.domElement.getBoundingClientRect();
+  const x=e.clientX-r.left, y=e.clientY-r.top, S=104, M=12;
+  if(x>=W-S-M && x<=W-M && y>=M && y<=M+S) return {nx:((x-(W-S-M))/S)*2-1, ny:-(((y-M)/S)*2-1)};
+  return null;
+}
+function pickCubeFace(nx,ny){
+  raycaster.setFromCamera(new THREE.Vector2(nx,ny), cubeCam);
+  const hit=raycaster.intersectObject(viewCube,false)[0];
+  return (hit&&hit.face)?hit.face.normal.clone():null;
+}
+function onCubeDown(e){
+  if(!viewCube) return;
+  const reg=inCubeRegion(e); if(!reg) return;
+  e.stopPropagation(); e.preventDefault();
+  pendingFace=pickCubeFace(reg.nx,reg.ny);
+  cubeDrag={x:e.clientX, y:e.clientY, moved:0};
+  controls.enabled=false; camera.up.set(0,1,0);
+  window.addEventListener('pointermove', onCubeMove, true);
+  window.addEventListener('pointerup', onCubeUp, true);
+}
+function onCubeMove(e){
+  if(!cubeDrag) return;
+  const dx=e.clientX-cubeDrag.x, dy=e.clientY-cubeDrag.y;
+  cubeDrag.x=e.clientX; cubeDrag.y=e.clientY; cubeDrag.moved+=Math.abs(dx)+Math.abs(dy);
+  const off=camera.position.clone().sub(controls.target);
+  const sph=new THREE.Spherical().setFromVector3(off);
+  sph.theta-=dx*0.012; sph.phi-=dy*0.012;
+  sph.phi=Math.max(0.02, Math.min(Math.PI-0.02, sph.phi));
+  off.setFromSpherical(sph); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target);
+}
+function onCubeUp(e){
+  window.removeEventListener('pointermove', onCubeMove, true);
+  window.removeEventListener('pointerup', onCubeUp, true);
+  controls.enabled=true;
+  if(cubeDrag && cubeDrag.moved<5 && pendingFace) applyView(pendingFace);  // 几乎没动=点击切面
+  cubeDrag=null; pendingFace=null;
+}
+function onResize(){const h=document.getElementById('c3d');camera.aspect=h.clientWidth/h.clientHeight;camera.updateProjectionMatrix();renderer.setSize(h.clientWidth,h.clientHeight);}
+function fitCamera(){const b=new THREE.Box3().setFromObject(modelGroup);if(b.isEmpty())return;
+  const c=b.getCenter(new THREE.Vector3()),s=b.getSize(new THREE.Vector3());
+  const r=Math.max(s.x,s.y,s.z)*0.62,dist=r/Math.tan(camera.fov*Math.PI/360)*1.5;
+  camera.position.copy(c).add(new THREE.Vector3(0.5,0.45,0.8).normalize().multiplyScalar(dist));
+  controls.target.copy(c); controls.update();}
+function clearGroup(){modelGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();});while(modelGroup.children.length)modelGroup.remove(modelGroup.children[0]);}
+
+function render(){
+  updateDerived();
+  const v=allVals(),ang=v.region_angle;
+  const gap=Math.max(60,v.sub_W*0.5);  // 子板不旋转, 固定留间距
+  const {bad,wr}=mainBodyProblems(v);
+  clearGroup();
+  modelGroup.add(part(shapeBack(v),v.shelf_back_T,MAT_BACK,0,12));
+  modelGroup.add(part(shapeFront(v),v.plate_T-v.shelf_back_T,MAT_FRONT,v.shelf_back_T,12));
+  bad.forEach(i=>{const ps=wr[i].map(p=>new THREE.Vector3(p[0],p[1],v.plate_T+0.8));ps.push(ps[0]);
+    modelGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ps),new THREE.LineBasicMaterial({color:0xe5484d})));});
+  // 子板毛坯
+  const sub=new THREE.Group();
+  const SA=new THREE.Shape(); outerRect(SA,v.sub_W,v.sub_H);
+  [1,-1].forEach(s=>SA.holes.push(circHole(0,s*(v.win_H/2-v.m3_inset),v.m3_dia/2)));
+  sub.add(part(SA,v.tab_T,MAT_BACK,0,12));
+  const SB=new THREE.Shape(); outerRect(SB,v.sub_W,v.sub_H-2*v.tab_H);
+  sub.add(part(SB,v.plate_T-v.tab_T,MAT_SUBF,v.tab_T,12));
+  sub.position.set(v.plate_W/2+gap+v.sub_W/2, -(v.plate_H-v.sub_H)/2, 0); modelGroup.add(sub);  // 子板不旋转, 底边与主体齐
+  modelGroup.position.y = v.plate_H/2;  // 整体立在网格上(底边落 Y=0)
+  if(!fitted){fitCamera();fitted=true;}
+
+  /* 校验 */
+  const reqEls=[...document.querySelectorAll('#form input[data-req="1"]')];
+  const emptyReq=reqEls.filter(el=>el.value==='');
+  reqEls.forEach(el=>el.classList.toggle('invalid',el.value===''));
+  const r=v.m3_dia/2, holeZ=v.win_H/2-v.m3_inset, subTop=v.sub_H/2;
+  const shelfOK=(v.m3_inset>=r)&&(v.m3_inset<=v.shelf_H-r);
+  const tabOK=(holeZ+r<=subTop)&&(holeZ-r>=subTop-v.tab_H);
+  const mainBad = emptyReq.length>0 || bad.size>0;
+  const probs=[];
+  if(emptyReq.length) probs.push('必填项未填');
+  if(bad.size>0) probs.push('区域重叠或越界（红框）');
+  if(!(shelfOK&&tabOK)) probs.push('固定孔超出台肩/耳，主体与子板孔无法重合贯通');
+  const save=document.getElementById('save'), exp=document.getElementById('export'), m=document.getElementById('msg');
+  save.disabled = probs.length>0;
+  exp.disabled = mainBad;           // 导出只看主体几何
+  if(probs.length){m.textContent='⚠ '+probs[0];m.style.color='var(--red)';}
+  else {m.textContent='预览已更新';m.style.color='var(--green)';}
+}
+
+/* ---------- 导出主体 3MF (前端直接生成, 不经 Fusion) ---------- */
+function geomTris(geoms){
+  const map=new Map(), verts=[], tris=[];
+  const key=(x,y,z)=>x.toFixed(4)+','+y.toFixed(4)+','+z.toFixed(4);
+  const vid=(x,y,z)=>{const k=key(x,y,z);let i=map.get(k);if(i===undefined){i=verts.length;map.set(k,i);verts.push([x,y,z]);}return i;};
+  for(const g of geoms){const p=g.attributes.position.array;
+    for(let i=0;i<p.length;i+=9) tris.push([vid(p[i],p[i+1],p[i+2]),vid(p[i+3],p[i+4],p[i+5]),vid(p[i+6],p[i+7],p[i+8])]);}
+  return {verts,tris};
+}
+function build3MF(verts,tris){
+  const vx=verts.map(p=>`<vertex x="${p[0].toFixed(4)}" y="${p[1].toFixed(4)}" z="${p[2].toFixed(4)}"/>`).join('');
+  const tx=tris.map(t=>`<triangle v1="${t[0]}" v2="${t[1]}" v3="${t[2]}"/>`).join('');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><resources><object id="1" type="model"><mesh><vertices>${vx}</vertices><triangles>${tx}</triangles></mesh></object></resources><build><item objectid="1"/></build></model>`;
+}
+async function exportMainBody3MF(){
+  const v=allVals();
+  const gA=new THREE.ExtrudeGeometry(shapeBack(v),{depth:v.shelf_back_T,bevelEnabled:false,curveSegments:48});
+  const gB=new THREE.ExtrudeGeometry(shapeFront(v),{depth:v.plate_T-v.shelf_back_T,bevelEnabled:false,curveSegments:48}); gB.translate(0,0,v.shelf_back_T);
+  const {verts,tris}=geomTris([gA,gB]); gA.dispose(); gB.dispose();
+  const model=build3MF(verts,tris);
+  const CT=`<?xml version="1.0" encoding="UTF-8"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>`;
+  const RELS=`<?xml version="1.0" encoding="UTF-8"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`;
+  const zip=new JSZip(); zip.file("[Content_Types].xml",CT); zip.folder("_rels").file(".rels",RELS); zip.folder("3D").file("3dmodel.model",model);
+  const blob=await zip.generateAsync({type:"blob"});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="主体_main_body.3mf"; a.click(); URL.revokeObjectURL(a.href);
+  const m=document.getElementById('msg'); m.textContent=`已导出主体 3MF（${tris.length} 面）`; m.style.color='var(--green)';
+}
+
+async function load(){const r=await fetch('/params?'+Date.now());DATA=await r.json();buildForm();fitted=false;render();}
+document.getElementById('preview').onclick=render;
+document.getElementById('reload').onclick=load;
+document.getElementById('resetview').onclick=()=>{fitted=false;fitCamera();fitted=true;};
+document.getElementById('export').onclick=()=>{ if(!document.getElementById('export').disabled) exportMainBody3MF(); };
+document.getElementById('save').onclick=async()=>{
+  const r=await fetch('/params',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DATA,null,2)});
+  const m=document.getElementById('msg');m.textContent=r.ok?'已保存 ✓':'保存失败';m.style.color=r.ok?'var(--green)':'var(--red)';
+};
+document.getElementById('adv').onchange=e=>{ advanced=e.target.checked; buildForm(); };
+init3D(); load();
+</script>
+</body>
+</html>

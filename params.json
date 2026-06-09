@@ -1,0 +1,180 @@
+{
+  "meta": {
+    "name": "喷头底板生成器 - 主体 + 子板毛坯",
+    "head": "G5",
+    "units": "mm",
+    "schema": 1,
+    "note": "唯一真相文件。generator.py 读此文件建模。喷头安装区域参数(法兰沉台/喷嘴窗/接口孔)属 Skill 2，另存。"
+  },
+  "shared": {
+    "plate_T": {
+      "value": 10,
+      "min": 4,
+      "max": 20,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "板厚(主体&子板共用)",
+      "required": true
+    },
+    "region_angle": {
+      "value": 30,
+      "min": -90,
+      "max": 90,
+      "step": 1,
+      "unit": "deg",
+      "label": "子板区域旋转角"
+    }
+  },
+  "main_body": {
+    "plate_W": {
+      "value": 325,
+      "min": 50,
+      "max": 1000,
+      "step": 1,
+      "unit": "mm",
+      "label": "主体板宽",
+      "required": true
+    },
+    "plate_H": {
+      "value": 210,
+      "min": 50,
+      "max": 600,
+      "step": 1,
+      "unit": "mm",
+      "label": "主体板高",
+      "required": true
+    },
+    "corner_dia": {
+      "value": 5.8,
+      "min": 2,
+      "max": 12,
+      "step": 0.1,
+      "unit": "mm",
+      "label": "角孔径(M4热熔)"
+    },
+    "corner_inset_x": {
+      "value": 10,
+      "min": 2,
+      "max": 60,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "角孔距左右边(定1个,镜像4个)",
+      "required": true
+    },
+    "corner_inset_z": {
+      "value": 30,
+      "min": 2,
+      "max": 120,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "角孔距上下边"
+    },
+    "win_count": {
+      "value": 2,
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "unit": "",
+      "label": "子板区域数量",
+      "required": true
+    },
+    "win_W": {
+      "value": 45,
+      "min": 10,
+      "max": 200,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "区域宽"
+    },
+    "win_H": {
+      "value": 150,
+      "min": 20,
+      "max": 400,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "区域高"
+    },
+    "win_pitch": {
+      "value": 100,
+      "min": 20,
+      "max": 300,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "区域间距(X)"
+    },
+    "shelf_H": {
+      "value": 15,
+      "min": 5,
+      "max": 50,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "窗口台肩高(单端)"
+    },
+    "shelf_back_T": {
+      "value": 6,
+      "min": 3,
+      "max": 15,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "台肩厚(自背面);正面凹槽=plate_T-此值"
+    },
+    "m3_dia": {
+      "value": 4.3,
+      "min": 2,
+      "max": 8,
+      "step": 0.1,
+      "unit": "mm",
+      "label": "M3孔径"
+    },
+    "m3_inset": {
+      "value": 9,
+      "min": 3,
+      "max": 40,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "M3孔距窗口上下边"
+    }
+  },
+  "sub_blank": {
+    "fit_gap_w": {
+      "value": 1,
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "unit": "mm",
+      "label": "子板与窗口 宽度总间隙"
+    },
+    "fit_gap_h": {
+      "value": 2,
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "unit": "mm",
+      "label": "子板与窗口 高度总间隙"
+    },
+    "tab_H": {
+      "value": 15.5,
+      "min": 5,
+      "max": 50,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "上下耳高"
+    },
+    "tab_T": {
+      "value": 4,
+      "min": 2,
+      "max": 9,
+      "step": 0.5,
+      "unit": "mm",
+      "label": "耳厚(自背面);正面凹槽=plate_T-此值"
+    }
+  },
+  "_derived": {
+    "sub_W": "win_W - fit_gap_w",
+    "sub_H": "win_H - fit_gap_h",
+    "sub_mount_dia": "m3_dia",
+    "sub_mount_z": "win_H/2 - m3_inset",
+    "flush_front_datum": "子板正面=主体正面=喷嘴面 (Z向齐平基准)",
+    "_constraint_holes_coincide": "主体台肩M3孔 与 子板耳固定孔 同位置(win_H/2-m3_inset)同径(m3_dia), 必须各自落在台肩带与耳带内才能重合贯通; UI 校验, 不满足禁止保存"
+  }
+}
