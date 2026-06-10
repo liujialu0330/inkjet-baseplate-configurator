@@ -17,7 +17,7 @@
       "required": true
     },
     "region_angle": {
-      "value": 30,
+      "value": 0,
       "min": -90,
       "max": 90,
       "step": 1,
@@ -27,7 +27,7 @@
   },
   "main_body": {
     "plate_W": {
-      "value": 325,
+      "value": 335,
       "min": 50,
       "max": 1000,
       "step": 1,
@@ -36,7 +36,7 @@
       "required": true
     },
     "plate_H": {
-      "value": 210,
+      "value": 180,
       "min": 50,
       "max": 600,
       "step": 1,
@@ -53,7 +53,7 @@
       "label": "角孔径(M4热熔)"
     },
     "corner_inset_x": {
-      "value": 10,
+      "value": 5,
       "min": 2,
       "max": 60,
       "step": 0.5,
@@ -62,7 +62,7 @@
       "required": true
     },
     "corner_inset_z": {
-      "value": 30,
+      "value": 38,
       "min": 2,
       "max": 120,
       "step": 0.5,
@@ -70,7 +70,7 @@
       "label": "角孔距上下边"
     },
     "win_count": {
-      "value": 2,
+      "value": 4,
       "min": 1,
       "max": 8,
       "step": 1,
@@ -95,7 +95,7 @@
       "label": "区域高"
     },
     "win_pitch": {
-      "value": 100,
+      "value": 65,
       "min": 20,
       "max": 300,
       "step": 0.5,
