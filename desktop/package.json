@@ -37,9 +37,9 @@
       ]
     },
     "nsis": {
-      "oneClick": false,
+      "oneClick": true,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "喷头底板配置器",
