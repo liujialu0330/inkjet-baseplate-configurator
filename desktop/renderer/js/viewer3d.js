@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { outerRect, circHole, shapeBack, shapeFront } from './shapes.js';
+import { extrudeEdges } from './geometry.js';
 import * as viewcube from './viewcube.js';
 
 /* ---------- 模块状态 ---------- */
@@ -49,7 +50,14 @@ function part(shape,depth,mat,z,segs){
   const g=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:segs||12});
   const m=new THREE.Mesh(g,mat); if(z)m.position.z=z;
   m.castShadow=true; m.receiveShadow=true;
-  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g,32),EDGE)); return m;
+  // 基于源 2D 轮廓自绘边线, 避免 EdgesGeometry 对挤出体盖面三角剖分产生内部伪边
+  const ep=shape.extractPoints(segs||12);  // {shape:[Vector2], holes:[[Vector2]]}
+  const outline=ep.shape.map(p=>[p.x,p.y]);
+  const holes=ep.holes.map(h=>h.map(p=>[p.x,p.y]));
+  const pos=extrudeEdges(outline,holes,depth,32);
+  const lg=new THREE.BufferGeometry();
+  lg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  m.add(new THREE.LineSegments(lg,EDGE)); return m;
 }
 
 function onResize(){const h=document.getElementById('c3d');camera.aspect=h.clientWidth/h.clientHeight;camera.updateProjectionMatrix();renderer.setSize(h.clientWidth,h.clientHeight);}
