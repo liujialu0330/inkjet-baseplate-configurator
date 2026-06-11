@@ -31,6 +31,9 @@
       "inkjet-baseplate-params.json",
       "renderer/**/*"
     ],
+    "asarUnpack": [
+      "node_modules/opencascade.js/**"
+    ],
     "win": {
       "target": [
         "nsis"
@@ -48,6 +51,8 @@
     }
   },
   "dependencies": {
-    "electron-updater": "^6.8.9"
+    "electron-updater": "^6.8.9",
+    "opencascade.js": "^2.0.0-beta.b5ff984",
+    "ws": "^8.21.0"
   }
 }

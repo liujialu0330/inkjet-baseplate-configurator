@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   loadParams: () => ipcRenderer.invoke('params:load'),
   saveParams: (data) => ipcRenderer.invoke('params:save', data),
+  exportStep: (payload) => ipcRenderer.invoke('step:export', payload),
   // 版本号 / 自动更新
   getVersion: () => ipcRenderer.invoke('app:version'),
   checkUpdate: () => ipcRenderer.invoke('update:check'),

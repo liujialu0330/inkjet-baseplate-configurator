@@ -6,6 +6,7 @@ export async function loadParams(){
   }catch(e){ console.error(e); return null; }
 }
 export async function saveParams(d){ try{ return await window.api.saveParams(d); }catch(e){ return false; } }
+export async function exportStep(payload){ try{ return await window.api.exportStep(payload); }catch(e){ return { ok:false, error:String(e) }; } }
 
 // 版本号 / 自动更新
 export async function getVersion(){ try{ return await window.api.getVersion(); }catch(e){ return ''; } }

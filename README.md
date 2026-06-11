@@ -23,7 +23,9 @@
 
 ## 桌面配置器(desktop)
 
-参数配置 + **真 3D 预览**(three.js, 不依赖 Fusion) + 重叠/必填/孔位校验 + 保存 `inkjet-baseplate-params.json` + 导出主体 3MF；带**版本号**与**自动更新**。
+参数配置 + **真 3D 预览**(three.js, 不依赖 Fusion) + 重叠/必填/孔位校验 + 保存 `inkjet-baseplate-params.json` + 导出主体 3MF / **STEP**；带**版本号**与**自动更新**。
+
+STEP 导出由内置 OpenCascade(WASM)内核生成精确 B-rep(AP214), 离线可用, 供 CNC 加工。高级参数里有「CNC 加工」开关: 开启后角孔/台肩孔变成螺纹下拉(M2.5~M6), 预览与导出按攻丝底孔直径生效; 同时导出会附带同名《加工说明.txt》(攻丝清单)。开关状态只存应用本地, 不写参数文件。需求与设计见 `doc/`。
 
 ### 开发运行
 ```powershell
