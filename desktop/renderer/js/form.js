@@ -9,7 +9,7 @@ function cncSwitchRow(){
   const inp=document.createElement('input'); inp.type='checkbox'; inp.checked=cnc.enabled;
   const sl=document.createElement('span'); sl.className='slider';
   sw.appendChild(inp); sw.appendChild(sl);
-  inp.onchange=()=>{ cnc.enabled=inp.checked; saveCnc(); buildForm(); markStale(); };
+  inp.onchange=()=>{ cnc.enabled=inp.checked; saveCnc(); buildForm(); markStale(); document.dispatchEvent(new CustomEvent('cnc-changed')); };
   row.appendChild(sw); return row;
 }
 // 螺纹下拉行: CNC 开启时替代 corner_dia / m3_dia 的数值输入

@@ -9,6 +9,32 @@ import { loadParams, saveParams, exportStep } from './api.js';
 import { setMsg, C } from './ui.js';
 import { initUpdates } from './updates.js';
 
+// 导出按钮互斥规则
+// exportBlocked=true 时两按钮均禁；false 时按 CNC 开关分配
+let exportBlocked = true;
+
+function applyExportRules(){
+  const btnMF  = document.getElementById('export');
+  const btnSTP = document.getElementById('exportstep');
+  // 3MF：校验通过 且 CNC 关闭时可点
+  const mfDisabled  = exportBlocked || store.cnc.enabled;
+  // STEP：校验通过 且 CNC 开启时可点
+  const stpDisabled = exportBlocked || !store.cnc.enabled;
+  btnMF.disabled  = mfDisabled;
+  btnSTP.disabled = stpDisabled;
+  // 按钮被禁且原因是 CNC 互斥时，给出 title 提示；否则清空
+  if(mfDisabled && !exportBlocked){
+    btnMF.title  = 'CNC 加工开启时导出 STEP（高级参数里可关闭 CNC）';
+  } else {
+    btnMF.title  = '';
+  }
+  if(stpDisabled && !exportBlocked){
+    btnSTP.title = '开启高级参数里的「CNC 加工」开关后可用';
+  } else {
+    btnSTP.title = '';
+  }
+}
+
 function render(){
   const v = store.allVals();
   form.updateDerived(v);
@@ -17,8 +43,8 @@ function render(){
   const emptyReqCount = form.markInvalidRequired();
   const res = validate(v, emptyReqCount, bad);
   document.getElementById('save').disabled = res.saveDisabled;
-  document.getElementById('export').disabled = res.exportDisabled;
-  document.getElementById('exportstep').disabled = res.exportDisabled;
+  exportBlocked = res.exportDisabled;
+  applyExportRules();
   if(res.problems.length) setMsg('⚠ '+res.problems[0], C.red);
   else setMsg('预览已更新', C.green);
 }
@@ -36,7 +62,7 @@ document.getElementById('exportstep').onclick = async () => {
   b.disabled = true;
   setMsg(store.cnc.enabled ? '正在生成 STEP（CNC 攻丝底孔）…' : '正在生成 STEP…', C.muted);
   const r = await exportStep({ vals: store.allVals(), cnc: { ...store.cnc } });
-  b.disabled = false;
+  applyExportRules();
   if(r && r.ok) setMsg(r.notePath ? `已导出 STEP + 加工说明：${r.path}` : `已导出 STEP：${r.path}`, C.green);
   else if(r && r.canceled) setMsg('已取消', C.muted);
   else setMsg('STEP 导出失败：'+(r && r.error || '未知错误'), C.red);
@@ -47,3 +73,5 @@ document.getElementById('adv').onchange = e => { store.state.advanced = e.target
 viewer.init3D();
 load();
 initUpdates();
+// 监听 CNC 开关变更，立即刷新导出按钮互斥状态（不需要重新 preview）
+document.addEventListener('cnc-changed', applyExportRules);
