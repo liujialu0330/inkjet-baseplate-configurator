@@ -1,16 +1,18 @@
-// updater.js — 自动更新 (electron-updater) + 手动检查 + 版本号 + 跳过此版本
+// updater.js — 自动更新 (electron-updater) + 手动检查 + 版本号 + 跳过此版本 + 更新后首启提示
 //
 // 更新源 = GitHub Releases (owner/repo 见 package.json -> build.publish)。
 // electron-updater 打包后自动读取生成的 app-update.yml, 无需在此 setFeedURL。
 // 每次发版:
-//   1) 调大 package.json 的 version;
-//   2) 运行 build-installer.ps1 打包;
-//   3) gh release create v<版本> dist/*Setup*.exe dist/*.blockmap dist/latest.yml
+//   1) 在 CHANGELOG.json 加入当前版本条目（GitHub Release 说明取自该文件）；
+//   2) 调大 package.json 的 version;
+//   3) 运行 build-installer.ps1 打包;
+//   4) gh release create v<版本> dist/*Setup*.exe dist/*.blockmap dist/latest.yml
 //      (或 electron-builder --publish always)。旧用户启动后/点"检查更新"即收到提示一键更新。
 const { autoUpdater } = require('electron-updater');
 const { dialog, ipcMain, app } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { htmlToText, notesBetween } = require('./update-notes');
 
 const CONFIGURED = true;   // 已接 GitHub Releases
 
@@ -18,15 +20,110 @@ let win = null;
 let manualCheck = false;   // 当前这次检查是否用户手动触发(手动时忽略"已跳过", 强制提示, 便于反悔)
 function send(payload){ if (win && !win.isDestroyed()) win.webContents.send('update:status', payload); }
 
-// —— "跳过此版本" 的持久化 (userData/update-prefs.json) ——
+// —— prefs 读写 (userData/update-prefs.json) ——
+// 合并写, 保留所有既有键; 读写失败静默处理
 function prefsPath(){ return path.join(app.getPath('userData'), 'update-prefs.json'); }
-function getSkippedVersion(){
-  try { return JSON.parse(fs.readFileSync(prefsPath(), 'utf-8')).skippedVersion || null; }
-  catch (e) { return null; }
+
+function readPrefs(){
+  try { return JSON.parse(fs.readFileSync(prefsPath(), 'utf-8')); }
+  catch (e) { return {}; }
 }
-function setSkippedVersion(v){
-  try { fs.writeFileSync(prefsPath(), JSON.stringify({ skippedVersion: v }, null, 2), 'utf-8'); }
-  catch (e) {}
+
+function writePrefs(patch){
+  try {
+    var cur = readPrefs();
+    var next = Object.assign({}, cur, patch);
+    fs.writeFileSync(prefsPath(), JSON.stringify(next, null, 2), 'utf-8');
+  } catch (e) {}
+}
+
+function getSkippedVersion(){ return readPrefs().skippedVersion || null; }
+function setSkippedVersion(v){ writePrefs({ skippedVersion: v }); }
+
+// —— 更新后首启弹窗 ——
+// 门: app.isPackaged 为真才启用; process.env.WHATS_NEW_TEST==='1' 时强制启用(含开发态)
+async function maybeShowWhatsNew(){
+  var testMode = process.env.WHATS_NEW_TEST === '1';
+  if (!app.isPackaged && !testMode) return;
+
+  var changelog;
+  try { changelog = require('./CHANGELOG.json'); }
+  catch (e) { return; }   // CHANGELOG.json 尚不存在时静默退出
+
+  var curVer = app.getVersion();
+  var prefs = readPrefs();
+  var lastSeen = prefs.lastSeenVersion || null;
+
+  var entries = [];   // [{version, items}]
+
+  if (testMode) {
+    // 测试模式: 强制展示当前版本条目，不写 lastSeenVersion
+    var cur = changelog[curVer];
+    if (cur && cur.length) entries = [{ version: curVer, items: cur }];
+  } else if (lastSeen === curVer) {
+    // 已弹过此版本, 不再提示
+    return;
+  } else if (lastSeen != null) {
+    // 有历史记录且版本不同 → 列出 (lastSeen, curVer] 区间所有条目
+    entries = notesBetween(changelog, lastSeen, curVer);
+  } else {
+    // lastSeenVersion 不存在 → 升级启发式
+    // 参数文件 inkjet-baseplate-params.json 存在说明应用之前已跑过(老版本升上来)
+    var paramsFile = path.join(app.getPath('userData'), 'inkjet-baseplate-params.json');
+    var hadPrevious = fs.existsSync(paramsFile);
+    if (hadPrevious) {
+      // 老版本升上来 → 只展示当前版本条目
+      var curItems = changelog[curVer];
+      if (curItems && curItems.length) entries = [{ version: curVer, items: curItems }];
+    } else {
+      // 全新安装 → 不弹
+      writePrefs({ lastSeenVersion: curVer });
+      return;
+    }
+  }
+
+  if (!entries.length) {
+    // 没有可展示的条目, 非测试模式更新 lastSeenVersion 后退出
+    if (!testMode) writePrefs({ lastSeenVersion: curVer });
+    return;
+  }
+
+  // 组装弹窗内容
+  var message = '已更新到 v' + curVer;
+  var detailLines = [];
+  if (entries.length === 1) {
+    // 单版本: 直接列条目, 不加版本小标题
+    entries[0].items.forEach(function (item) { detailLines.push('• ' + item); });
+  } else {
+    // 多版本: 每段加 vX.Y.Z 小标题
+    entries.forEach(function (entry) {
+      detailLines.push('v' + entry.version);
+      entry.items.forEach(function (item) { detailLines.push('  • ' + item); });
+      detailLines.push('');
+    });
+    // 去掉末尾多余空行
+    while (detailLines.length && detailLines[detailLines.length - 1] === '') detailLines.pop();
+  }
+  var detail = detailLines.join('\n');
+
+  if (testMode) {
+    // 测试模式: 打印供 E2E 断言, 不写 lastSeenVersion
+    console.log('[whatsnew] ' + JSON.stringify({ message: message, detail: detail }));
+    return;
+  }
+
+  await dialog.showMessageBox(win, {
+    type: 'info',
+    title: '更新完成',
+    message: message,
+    detail: detail,
+    buttons: ['知道了'],
+    defaultId: 0,
+    noLink: true
+  });
+
+  // 弹窗关闭后记录, 下次不再弹
+  writePrefs({ lastSeenVersion: curVer });
 }
 
 function wireEvents(){
@@ -46,11 +143,19 @@ function wireEvents(){
       return;
     }
     send({ state: 'available', version: info.version });
+
+    // 若 releaseNotes 非空, 在 detail 开头插入本次更新说明
+    var releaseDetail = '';
+    if (info.releaseNotes) {
+      var noteText = htmlToText(info.releaseNotes);
+      if (noteText) releaseDetail = '本次更新:\n' + noteText + '\n\n';
+    }
+
     const r = await dialog.showMessageBox(win, {
       type: 'info', buttons: ['现在更新', '跳过此版本', '稍后'], defaultId: 0, cancelId: 2, noLink: true,
       title: '发现新版本',
       message: `发现新版本 ${info.version}（当前 ${app.getVersion()}）`,
-      detail: '“现在更新”立即下载；“跳过此版本”将不再提示此版本，直到出现更新的版本；“稍后”下次启动再提醒。'
+      detail: releaseDetail + '"现在更新"立即下载；"跳过此版本"将不再提示此版本，直到出现更新的版本；"稍后"下次启动再提醒。'
     });
     if (r.response === 0) {
       send({ state: 'downloading', percent: 0 });
@@ -64,11 +169,19 @@ function wireEvents(){
 
   autoUpdater.on('update-downloaded', async (info) => {
     send({ state: 'downloaded', version: info.version });
+
+    // 若 releaseNotes 非空, 在 detail 开头插入本次更新说明
+    var releaseDetail = '';
+    if (info.releaseNotes) {
+      var noteText = htmlToText(info.releaseNotes);
+      if (noteText) releaseDetail = '本次更新:\n' + noteText + '\n\n';
+    }
+
     const r = await dialog.showMessageBox(win, {
       type: 'info', buttons: ['立即重启安装', '稍后'], defaultId: 0, cancelId: 1, noLink: true,
       title: '更新已就绪',
       message: `新版本 ${info.version} 已下载完成`,
-      detail: '立即重启完成安装？（选"稍后"会在下次退出应用时自动安装）'
+      detail: releaseDetail + '立即重启完成安装？（选"稍后"会在下次退出应用时自动安装）'
     });
     if (r.response === 0) autoUpdater.quitAndInstall();
   });
@@ -91,6 +204,8 @@ function registerUpdater(mainWindow){
   wireEvents();
   ipcMain.handle('app:version', () => app.getVersion());
   ipcMain.handle('update:check', () => doCheck(false));
+  // 启动约 1200ms 后展示"更新后首启弹窗"(窗口先画出来, 早于 3s 的自动检查)
+  setTimeout(() => maybeShowWhatsNew(), 1200);
   if (CONFIGURED) setTimeout(() => doCheck(true), 3000);   // 启动 3s 后静默自动检查
 }
 
