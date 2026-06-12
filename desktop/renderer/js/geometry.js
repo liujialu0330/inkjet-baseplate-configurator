@@ -72,6 +72,144 @@ export function extrudeEdges(outline, holes, depth, thresholdDeg = 32) {
   return segs;
 }
 
+/**
+ * 修复 T 形开放边: 若开放边 (a,b) 内部恰好有另一顶点 v 在线段上,
+ * 把含 (a,b) 的三角形一分为二, 迭代直至无开放边或无进展(上限 20 轮)。
+ * @param {{verts:number[][], tris:number[][]}} mesh  焊接后的网格(原地修改)
+ * @returns {{verts:number[][], tris:number[][]}}  同对象(已修改)
+ */
+export function fixOpenEdges(mesh){
+  const EPS=5e-4; // 距离容差(与 toFixed(4) 量化精度匹配)
+  const TEPS=1e-6; // 投影端点容差
+  for(let round=0;round<20;round++){
+    // 统计无向边 → 面数; 记录有向边 → 三角形索引
+    const edgeCount=new Map();
+    const edgeKey=(a,b)=>a<b?`${a}_${b}`:`${b}_${a}`;
+    const edgeFace=new Map(); // 有向边 "a_b" → tri_idx(首个)
+    for(let ti=0;ti<mesh.tris.length;ti++){
+      const [a,b,c]=mesh.tris[ti];
+      for(const [p,q] of [[a,b],[b,c],[c,a]]){
+        const k=edgeKey(p,q);
+        edgeCount.set(k,(edgeCount.get(k)||0)+1);
+        const dk=`${p}_${q}`;
+        if(!edgeFace.has(dk)) edgeFace.set(dk,ti);
+      }
+    }
+    // 找所有开放边(被 1 个面引用的无向边)
+    const openEdges=[];
+    for(const [k,cnt] of edgeCount){
+      if(cnt===1){const [sa,sb]=k.split('_');openEdges.push([+sa,+sb]);}
+    }
+    if(openEdges.length===0)break;
+    let progressed=false;
+    const modifiedTris=new Set(); // 本轮已被修改的三角形
+    for(let [a,b] of openEdges){
+      const [ax,ay,az]=mesh.verts[a],[bx,by,bz]=mesh.verts[b];
+      const dx=bx-ax,dy=by-ay,dz=bz-az;
+      const lenSq=dx*dx+dy*dy+dz*dz;
+      if(lenSq<1e-12)continue;
+      // 在顶点表中找严格位于线段 (a,b) 内部的顶点
+      let found=-1;
+      for(let vi=0;vi<mesh.verts.length;vi++){
+        if(vi===a||vi===b)continue;
+        const [vx,vy,vz]=mesh.verts[vi];
+        const t=((vx-ax)*dx+(vy-ay)*dy+(vz-az)*dz)/lenSq;
+        if(t<=TEPS||t>=1-TEPS)continue;
+        const px=ax+t*dx,py=ay+t*dy,pz=az+t*dz;
+        const ex=vx-px,ey=vy-py,ez=vz-pz;
+        if(Math.sqrt(ex*ex+ey*ey+ez*ez)<EPS){found=vi;break;}
+      }
+      if(found<0)continue;
+      // 找含有向边 a→b 或 b→a 的三角形(开放边只被1面引用,有向唯一)
+      let ti=-1;
+      if(edgeFace.has(`${a}_${b}`)) ti=edgeFace.get(`${a}_${b}`);
+      else if(edgeFace.has(`${b}_${a}`)) ti=edgeFace.get(`${b}_${a}`);
+      if(ti<0||modifiedTris.has(ti))continue;
+      const tri=mesh.tris[ti];
+      // 找 a→b 方向
+      let pa=tri.indexOf(a),pb=-1;
+      if(pa>=0&&tri[(pa+1)%3]===b) pb=(pa+1)%3;
+      else {pa=tri.indexOf(b); if(pa>=0&&tri[(pa+1)%3]===a){pb=(pa+1)%3;[a,b]=[b,a];pa=tri.indexOf(a);pb=(pa+1)%3;}}
+      if(pa<0||pb<0){
+        // 重新确认
+        let foundDir=false;
+        for(let k2=0;k2<3;k2++){
+          if(tri[k2]===a&&tri[(k2+1)%3]===b){pa=k2;pb=(k2+1)%3;foundDir=true;break;}
+          if(tri[k2]===b&&tri[(k2+1)%3]===a){pa=k2;pb=(k2+1)%3;[a,b]=[b,a];pa=k2;pb=(k2+1)%3;foundDir=true;break;}
+        }
+        if(!foundDir)continue;
+      }
+      pa=tri.indexOf(a); if(pa<0||tri[(pa+1)%3]!==b)continue;
+      const c=tri[(pa+2)%3];
+      if(c===found)continue; // 防止退化
+      mesh.tris[ti]=[a,found,c];
+      mesh.tris.push([found,b,c]);
+      modifiedTris.add(ti);
+      progressed=true;
+    }
+    if(!progressed)break;
+  }
+  return mesh;
+}
+
+/**
+ * 提取网格在 z=filterZ 平面的开放边环路。
+ * 返回数组，每个元素是该平面上的一个闭合/链状环：
+ * [{vi:number, x:number, y:number}, ...]
+ */
+export function extractOpenLoops(verts, tris, filterZ) {
+  const EPS = 1e-6;
+  const edgeCount = new Map(), edgeDirMap = new Map();
+  const edgeKey = (a, b) => a < b ? `${a}_${b}` : `${b}_${a}`;
+  for (const [a, b, c] of tris) {
+    for (const [p, q] of [[a,b],[b,c],[c,a]]) {
+      const k = edgeKey(p, q);
+      edgeCount.set(k, (edgeCount.get(k) || 0) + 1);
+      if (!edgeDirMap.has(k)) edgeDirMap.set(k, `${p}_${q}`);
+    }
+  }
+  const fromTo = new Map();
+  for (const [k, cnt] of edgeCount) {
+    if (cnt !== 1) continue;
+    const [sa, sb] = k.split('_');
+    const a = +sa, b = +sb;
+    if (Math.abs(verts[a][2] - filterZ) > EPS || Math.abs(verts[b][2] - filterZ) > EPS) continue;
+    const dk = edgeDirMap.get(k);
+    const [da, db] = dk.split('_').map(Number);
+    if (!fromTo.has(da)) fromTo.set(da, []);
+    fromTo.get(da).push(db);
+  }
+  const visited = new Set(), loops = [];
+  for (const [start] of fromTo) {
+    if (visited.has(start)) continue;
+    const loop = [start]; visited.add(start); let cur = start;
+    for (let i = 0; i < 10000; i++) {
+      const nexts = fromTo.get(cur) || [];
+      const next = nexts.find(n => !visited.has(n));
+      if (next === undefined) break;
+      visited.add(next); loop.push(next); cur = next;
+    }
+    loops.push(loop.map(i => ({ vi: i, x: verts[i][0], y: verts[i][1] })));
+  }
+  return loops;
+}
+
+/** 有符号面积: sa2>0 表示 CW（从上看顺时针）*/
+export function signedArea2Pts(pts) {
+  let a = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const j = (i + 1) % pts.length;
+    a += (pts[j].x - pts[i].x) * (pts[j].y + pts[i].y);
+  }
+  return a / 2;
+}
+
+/** 重心 */
+export function centroidPts(pts) {
+  return { x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+           y: pts.reduce((s, p) => s + p.y, 0) / pts.length };
+}
+
 // 主体几何问题: 窗口互相重叠 或 越出板边界 或 必填缺失
 export function mainBodyProblems(v){
   const out=[]; const n=Math.round(v.win_count);
